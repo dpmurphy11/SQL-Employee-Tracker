@@ -94,8 +94,8 @@ USE `company_db`$$
 CREATE DEFINER=`root`@`localhost` PROCEDURE `prc_fetchEmployee`(employee_id int, mgr_id int, department_id int)
 BEGIN
 	if department_id is not null then
-   		select employee.id, employee.first_name, employee.last_name, employee.role_id, employee.manager_id, mgr.id as mgr_id, mgr.first_name as mgr_first_name, mgr.last_name as mgr_last_name, 
-        role.department_id, title, name as department
+   		select employee.id, employee.first_name, employee.last_name, employee.role_id, employee.manager_id, mgr.first_name as mgr_first_name, mgr.last_name as mgr_last_name, 
+        role.department_id, title, name as department, salary
 		from employee
 		left outer join role on employee.role_id = role.id
 		left outer join department on department.id = role.department_id 
@@ -103,8 +103,8 @@ BEGIN
 		where department.id = department_id
 		order by department.id, role_id, first_name, last_name;
 	elseif mgr_id is not null then
-   		select employee.id, employee.first_name, employee.last_name, employee.role_id, employee.manager_id, mgr.id as mgr_id, mgr.first_name as mgr_first_name, mgr.last_name as mgr_last_name, 
-        role.department_id, title, name as department
+   		select employee.id, employee.first_name, employee.last_name, employee.role_id, employee.manager_id, mgr.first_name as mgr_first_name, mgr.last_name as mgr_last_name, 
+        role.department_id, title, name as department, salary
 		from employee
 		left outer join role on employee.role_id = role.id
 		left outer join department on department.id = role.department_id 
@@ -112,8 +112,8 @@ BEGIN
         where employee.manager_id = mgr_id
 		order by department.id, role_id, first_name, last_name;
 	elseif employee_id is not NULL then
-   		select employee.id, employee.first_name, employee.last_name, employee.role_id, employee.manager_id, mgr.id as mgr_id, mgr.first_name as mgr_first_name, mgr.last_name as mgr_last_name, 
-        role.department_id, title, name as department
+   		select employee.id, employee.first_name, employee.last_name, employee.role_id, employee.manager_id, mgr.first_name as mgr_first_name, mgr.last_name as mgr_last_name, 
+        role.department_id, title, name as department, salary
 		from employee
 		left outer join role on employee.role_id = role.id
 		left outer join department on department.id = role.department_id 
@@ -121,8 +121,8 @@ BEGIN
 		where employee.id = employee_id
 		order by department.id, role_id, first_name, last_name;
 	else
-   		select employee.id, employee.first_name, employee.last_name, employee.role_id, employee.manager_id, mgr.id as mgr_id, mgr.first_name as mgr_first_name, mgr.last_name as mgr_last_name, 
-        role.department_id, title, name as department
+   		select employee.id, employee.first_name, employee.last_name, employee.role_id, employee.manager_id, mgr.first_name as mgr_first_name, mgr.last_name as mgr_last_name, 
+        role.department_id, title, name as department, salary
 		from employee
 		left outer join role on employee.role_id = role.id
 		left outer join department on department.id = role.department_id 
