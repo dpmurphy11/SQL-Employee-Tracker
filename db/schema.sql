@@ -19,11 +19,11 @@ CREATE SCHEMA IF NOT EXISTS `company_db` DEFAULT CHARACTER SET utf8mb4 COLLATE u
 USE `company_db` ;
 
 -- -----------------------------------------------------
--- Table `company_db`.`department`
+-- Table `department`
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS `company_db`.`department` ;
+DROP TABLE IF EXISTS `department` ;
 
-CREATE TABLE IF NOT EXISTS `company_db`.`department` (
+CREATE TABLE IF NOT EXISTS `department` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `name` VARCHAR(30) NOT NULL,
   PRIMARY KEY (`id`))
@@ -33,51 +33,54 @@ COLLATE = utf8mb4_0900_ai_ci;
 
 
 -- -----------------------------------------------------
--- Table `company_db`.`role`
+-- Table `role`
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS `company_db`.`role` ;
+DROP TABLE IF EXISTS `role` ;
 
-CREATE TABLE IF NOT EXISTS `company_db`.`role` (
+CREATE TABLE IF NOT EXISTS `role` (
   `id` INT NOT NULL AUTO_INCREMENT,
-  `title` VARCHAR(30) NOT NULL,
-  `salary` DECIMAL(10,0) NOT NULL,
+  `title` VARCHAR(30) NULL DEFAULT NULL,
+  `salary` DECIMAL(10,2) UNSIGNED ZEROFILL NULL DEFAULT NULL,
   `department_id` INT NULL DEFAULT NULL,
   PRIMARY KEY (`id`),
-  INDEX `FK_department_idx` (`department_id` ASC) VISIBLE,
   CONSTRAINT `FK_department`
     FOREIGN KEY (`department_id`)
-    REFERENCES `company_db`.`department` (`id`)
+    REFERENCES `department` (`id`)
     ON DELETE SET NULL)
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8mb4
 COLLATE = utf8mb4_0900_ai_ci;
 
+CREATE INDEX `FK_department_idx` ON `role` (`department_id` ASC) VISIBLE;
+
 
 -- -----------------------------------------------------
--- Table `company_db`.`employee`
+-- Table `employee`
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS `company_db`.`employee` ;
+DROP TABLE IF EXISTS `employee` ;
 
-CREATE TABLE IF NOT EXISTS `company_db`.`employee` (
+CREATE TABLE IF NOT EXISTS `employee` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `first_name` VARCHAR(30) NULL DEFAULT NULL,
   `last_name` VARCHAR(30) NULL DEFAULT NULL,
   `role_id` INT NULL DEFAULT NULL,
   `manager_id` INT NULL DEFAULT NULL,
   PRIMARY KEY (`id`),
-  INDEX `FK_role_idx` (`role_id` ASC) VISIBLE,
-  INDEX `FK_manager_idx` (`manager_id` ASC) VISIBLE,
   CONSTRAINT `FK_manager`
     FOREIGN KEY (`manager_id`)
-    REFERENCES `company_db`.`employee` (`id`)
+    REFERENCES `employee` (`id`)
     ON DELETE SET NULL,
   CONSTRAINT `FK_role`
     FOREIGN KEY (`role_id`)
-    REFERENCES `company_db`.`role` (`id`)
+    REFERENCES `role` (`id`)
     ON DELETE SET NULL)
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8mb4
 COLLATE = utf8mb4_0900_ai_ci;
+
+CREATE INDEX `FK_role_idx` ON `employee` (`role_id` ASC) VISIBLE;
+
+CREATE INDEX `FK_manager_idx` ON `employee` (`manager_id` ASC) VISIBLE;
 
 
 SET SQL_MODE=@OLD_SQL_MODE;
