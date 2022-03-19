@@ -23,14 +23,20 @@ class dataAccess {
         );    
     }
 
-    getAllEmployees() {
-        this.dbConnection.query(`call prc_fetchEmployee(${this.employeeId}, ${this.managerId}, ${this.departmentId})`, function (err, results) {
+    fetchEmployees(employeeId, managerId, departmentId) {
+        this.dbConnection.query(`call prc_fetchEmployee(${employeeId}, ${managerId}, ${departmentId})`, function (err, results) {
             // sp's return a nested array. must extract the nested array which is the dataset
             let resultSet = results[0, 0];
-            console.log(resultSet);
-            console.table(resultSet);
         });
     }
+
+    fetchDepartments(departmentId) {
+        this.dbConnection.query(`call prc_fetchDepartment(${departmentId})`, function (err, results) {
+            // sp's return a nested array. must extract the nested array which is the dataset
+            let resultSet = results[0, 0];
+        });
+    }
+
 }
 
 module.exports = dataAccess;
