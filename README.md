@@ -9,7 +9,7 @@ A command-line application that manages a company's employee database, using Nod
 * [License](#license)
 * [Screenshot](#screenshot)
 * [Repository](#repository-httpsgithubcomdpmurphy11sql-employee-tracker)
-* [Demo Video](#demo-video-1-httpsdrivegooglecomfiled1rppkucywryrh2uqni1aidunz6lkibj2viewuspsharing)
+* [Demo Videos](#demo-video-1-httpsdpmurphy11githubiosql-employee-trackerassetssql-employee-tracker-video1webm)
 * [Questions](#questions)
 ## Installation
   To install the project dependencies, run the following command:
@@ -74,8 +74,8 @@ THEN the user is presented with a formatted table showing the combined salaries 
 ### Screenshot
 ![Application screenshot]()
 ### Repository: <https://github.com/dpmurphy11/SQL-Employee-Tracker>
-### Demo Video 1: <https://drive.google.com/file/d/1RppKUCywrYRh2UqNi1aiDUNz_6lkiBJ2/view?usp=sharing>
-### Demo Video 2: <https://drive.google.com/file/d/18Un_YVewreQE9KyvnNrIEpvQ4QwqVeMt/view?usp=sharing>
+### Demo Video 1: <https://dpmurphy11.github.io/SQL-Employee-Tracker/assets/SQL-Employee-Tracker-video1.webm>
+### Demo Video 2: <https://dpmurphy11.github.io/SQL-Employee-Tracker/assets/SQL-Emploee-Tracker-video2.webm>
 ### Questions
   If you have any questions about the repo, open an issue or contact me at dpmurphy_onsite@hotmail.com
   Visit my GitHub profile at [dpmurphy11](https://github.com/dpmurphy11/).
