@@ -1,238 +1,615 @@
 const dataAccessObject = require('./utils/clsDataAccess');
-const outputHelper = require('./utils/consoleUtil')
+const outputHelper = require('./utils/clsConsoleUtil')
 const inquirer = require('inquirer');
+require('dotenv').config();
+const userActions = [
+    { name: 'View all employees.', value: process.env.VIEW_ALL_EMPS, },
+    { name: 'View employee by manager.', value: process.env.VIEW_EMPS_BY_MGR, },
+    { name: 'View employee by department.', value: process.env.VIEW_EMPS_BY_DEPT, },
+    { name: 'View all roles.', value: process.env.VIEW_ALL_ROLES, },
+    { name: 'View all departments.', value: process.env.VIEW_ALL_DEPTS, },
+    { name: 'Add an employee.', value: process.env.ADD_EMP, },
+    { name: 'Add a role.', value: process.env.ADD_ROLE, },
+    { name: 'Add a department.', value: process.env.ADD_DEPT, },
+    { name: 'Update employee role.', value: process.env.UPDATE_EMP_ROLE, },
+    { name: 'Update employee manager.', value: process.env.UPDATE_EMP_MNGR, },
+    { name: 'Delete a department.', value: process.env.DELETE_DEPT, },
+    { name: 'Delete a role.', value: process.env.DELETE_ROLE, },
+    { name: 'Delete an employee.', value: process.env.DELETE_EMP, },
+    { name: 'View budget by department.', value: process.env.VIEW_BUDGET, },
+    { name: 'Quit.', value: process.env.QUIT, },
+];
 
-// create data access object and call method to connect to db
 const dao = new dataAccessObject;
-dao.connect();
+const oh = new outputHelper;
 
-outputHelper.showSplash();
 // main inquirer menu
-const mainMenu = () => {
+const mainMenu = async () => {
     // reset dao properties
-    dao.departmentId = null;
-    dao.employeeId = null;
-    dao.managerId = null;
-    dao.roleId = null;
-    console.log('What would you like to do?')
     inquirer
         .prompt([
             {
                 type: 'list',
                 name: 'action',
                 message: 'What would you like to do?',
-                choices: ['View all employees.',
-                            'View employee by manager.',
-                            'View employee by department.',
-                            'View all roles.',
-                            'View all departments.',
-                            'Add an employee',
-                            'Add a role.',
-                            'Add a department',
-                            'Update employee role.',
-                            'Update employee manager.',
-                            'Delete department',
-                            'Delete role',
-                            'Delete employee',
-                            'View budget by department',
-                        ],
+                choices: userActions,
             },
         ])
         .then((answers) => {
-            switch (answers) {
-                case 'View all employees.':
-                    // fetch recordset
-                    var jsonRS = getEmployees(null, null, null);
-                    // format and output rs to console
-                    outputHelper.renderOutput(jsonRS);
-                    // return to main menu
-                    mainMenu();
-                break;
-                case 'View employee by manager.':
-                    // fetch rs of employees to choos from
-                    var jsonRS = getEmployees(null, null, null);
-                    inquirer
-                    .prompt([
-                        {
-                            type: 'list',
-                            name: 'action',
-                            message: 'Please choose a manager.',
-                            choices: jsonRS,
-                        },
-                    ])
-                    .then((answers) => {
-                        // get employess by manager id
-                        var jsonRS = getEmployees(null, answers.id, null);
-                        outputHelper.renderOutput(jsonRS);
-                        // return to main menu
-                        mainMenu();
-                    });
-                break;
-                case 'View employee by department.':
-                    // fetch rs of departments to choose from
-                    var jsonRS = getDepartments(null);
-                    inquirer
-                    .prompt([
-                        {
-                            type: 'list',
-                            name: 'action',
-                            message: 'Please choose a department.',
-                            choices: jsonRS,
-                        },
-                    ])
-                    .then((answers) => {
-                        // get employess by department id
-                        var jsonRS = getEmployees(null, null, answers.id);
-                        outputHelper.renderOutput(jsonRS);
-                        // return to main menu
-                        mainMenu();
-                    });
-                break;
-            
+            const mainAnswer = answers.action;
+            switch (mainAnswer) {
+                case process.env.VIEW_ALL_EMPS:
+                    // fetch and show employees
+                    getEmployees(null, null, null, mainAnswer);
+                    break;
+                case process.env.VIEW_EMPS_BY_MGR:
+                    getEmployeesMgr();
+                    break;
+                case process.env.VIEW_EMPS_BY_DEPT:
+                    getEmployeesByDept();
+                    break;
+                case process.env.VIEW_ALL_ROLES:
+                    getAllRoles(mainAnswer);
+                    break;
+                case process.env.VIEW_ALL_DEPTS:
+                    getAllDepartments(mainAnswer);
+                    break;
+                case process.env.ADD_EMP:
+                    addEmployee(mainAnswer);
+                    break;
+                case process.env.ADD_ROLE:
+                    addRole(mainAnswer);
+                    break;
+                case process.env.ADD_DEPT:
+                    addDepartment(mainAnswer);
+                    break;
+                case process.env.UPDATE_EMP_ROLE:
+                    updateEmployeeRole(mainAnswer);
+                    break;
+                case process.env.UPDATE_EMP_MNGR:
+                    updateEmployeeManager(mainAnswer);
+                    break;
+                case process.env.DELETE_DEPT:
+                    deleteDepartment(mainAnswer);
+                    break;
+                case process.env.DELETE_ROLE:
+                    deleteRole(mainAnswer);
+                    break;
+                case process.env.DELETE_EMP:
+                    deleteEmployee(mainAnswer);
+                    break;
+                case process.env.VIEW_BUDGET:
+                    getBudgetByDept(mainAnswer);
+                    break;
+                case process.env.QUIT:
+                    dao.disconnect();
+                    console.log('GOODBYE!');
+                    process.exit();
                 default:
+                    console.log('Invalid selections. Please try again.');
+                    mainMenu();
                     break;
             }
-            // create manager object and add properties to it
-            const manager = new Manager(answers.mgrName, parseInt(answers.mgrId), answers.mgrEmail, parseInt(answers.mgrOfficeNo));
-            // add manager to arrEmployees
-            arrEmployees.push(manager);
-            askEmployeeQuestions();
+        });
+}
+
+const getEmployees = (empId, mgrId, deptId, action) => {
+    // fetch employees recordset
+    dao.fetchEmployees(empId, mgrId, deptId)
+        .then(([res]) => {
+            let employees = res[0, 0];
+            if (!employees.length) {
+                console.log('\nNo employees were found.\n');
+            } else {
+                // format and output rs to console
+                oh.renderOutput(employees, action);
+            }
         })
+        .then(() => mainMenu());
 }
 
-const getEmployees = (empId, mgrId, deptId) => {
-    // fetch recordset
-    return dao.fetchEmployees(empId, mgrId, deptId);
+const getEmployeesMgr = () => {
+    // fetch employees
+    dao.fetchEmployees(null, null, null)
+        .then(([res]) => {
+            let employees = res[0, 0];
+            // format and output prompt
+            const mgrPrompts = employees.map(({ id, first_name, last_name }) => ({
+                name: `${first_name} ${last_name}`,
+                value: id
+            }));
+
+            inquirer.prompt([
+                {
+                    type: 'list',
+                    name: 'mgrId',
+                    message: 'Please choose a manager.',
+                    choices: mgrPrompts
+                }
+            ])
+                // get employees for that manager, format and show
+                .then(answers => getEmployees(null, answers.mgrId, null, process.env.VIEW_ALL_EMPS))
+        });
 }
 
-const getDepartments = () => {
-    // fetch recordset
-    return dao.fetchEmployees(empId, mgrId, deptId);
+const getEmployeesByDept = () => {
+    // fetch departments
+    dao.fetchDepartments(null)
+        .then(([res]) => {
+            let departments = res[0, 0];
+            // format and output prompt
+            const deptPrompts = departments.map(({ id, name }) => ({
+                name: name,
+                value: id
+            }));
+
+            inquirer.prompt([
+                {
+                    type: 'list',
+                    name: 'deptId',
+                    message: 'Please choose a department.',
+                    choices: deptPrompts
+                }
+            ])
+                // get employees for that dept, format and show
+                .then(answers => getEmployees(null, null, answers.deptId, process.env.VIEW_ALL_EMPS))
+        });
 }
-let askInternQuestions = () => {
-    // ask intern questions and add to arrEmployees
+
+const getAllRoles = (action) => {
+    // fetch roles
+    dao.fetchRoles(null)
+        .then(([res]) => {
+            let roles = res[0, 0];
+            if (!roles.length) {
+                console.log('\nNo roles were found.\n');
+            } else {
+                // format and output rs to console
+                oh.renderOutput(roles, action);
+            }
+        })
+        .then(() => mainMenu());
+}
+
+const getAllDepartments = (action) => {
+    // fetch departments
+    dao.fetchDepartments(null)
+        .then(([res]) => {
+            let depts = res[0, 0];
+            if (!depts.length) {
+                console.log('\nNo departments were found.\n');
+            } else {
+                // format and output rs to console
+                oh.renderOutput(depts, action);
+            }
+        })
+        .then(() => mainMenu());
+}
+
+const getBudgetByDept = (action) => {
+    // fetch departments
+    dao.fetchDepartments(null)
+        .then(([res]) => {
+            let departments = res[0, 0];
+            // format and output prompt
+            const deptPrompts = departments.map(({ id, name }) => ({
+                name: name,
+                value: id
+            }));
+
+            inquirer.prompt([
+                {
+                    type: 'list',
+                    name: 'deptId',
+                    message: 'Please choose a department.',
+                    choices: deptPrompts
+                }
+            ])
+                // get budget for that dept, format and show
+                .then((answers) => {
+                    dao.fetchBudegetbyDept(answers.deptId)
+                        .then(([res]) => {
+                            let budgetRS = res[0, 0];
+                            if (!budgetRS.length) {
+                                console.log('\nNo roles or employees were found for that department.\n');
+                            } else {
+                                // format and output rs to console
+                                oh.renderOutput(budgetRS, action);
+                            }
+                        })
+                        .then(() => mainMenu());
+                });
+        });
+}
+
+const addEmployee = (action) => {
     inquirer.prompt([
         {
-            type: 'input',
-            name: 'intName',
-            message: 'What is your intern\'s name?',
-            default: 'Bob Jones',
+            name: 'first_name',
+            message: 'Enter a first name for the new employee.'
         },
         {
-            inte: 'input',
-            name: 'intEmail',
-            message: 'What is your intern\'s email?',
-            default: 'bob@jones.com',
-        },
-        {
-            type: 'input',
-            name: 'intId',
-            message: 'What is your intern\'s id?',
-            validate: (input) => {
-                if (!input || isNaN(input)) {
-                    console.log('Answer must be a number.');
-                    return false;
-                }
-                return true;
-            }
-        },
-        {
-            type: 'input',
-            name: 'intSchool',
-            message: 'What is your intern\'s school?',
-            default: 'UMASS-Boston',
+            name: 'last_name',
+            message: 'Enter a last name for the new employee.'
         },
     ])
-        .then((answers) => {
-            // create intern object and add properties to it
-            let intern = new Intern(answers.intName, parseInt(answers.intId), answers.intEmail, answers.intSchool);
-            // add intern to arrEmployees
-            arrEmployees.push(intern);
-            // start at the top
-            askEmployeeQuestions();
-        })
+        .then(answers => {
+            let firstName = answers.first_name;
+            let lastName = answers.last_name;
+
+            dao.fetchRoles(null)
+                .then(([res]) => {
+                    let roles = res[0, 0];
+                    // format and output prompt
+                    const rolePrompts = roles.map(({ id, title }) => ({
+                        name: title,
+                        value: id
+                    }));
+
+                    inquirer.prompt([
+                        {
+                            type: 'list',
+                            name: 'roleId',
+                            message: 'Please choose a role for this new employee.',
+                            choices: rolePrompts
+                        }
+                    ])
+                        .then((answers) => {
+                            let roleId = answers.roleId;
+
+                            dao.fetchEmployees(null, null, null)
+                                .then(([res]) => {
+                                    let managers = res[0, 0];
+                                    // format and output prompt
+                                    const managerPrompts = managers.map(({ id, first_name, last_name }) => ({
+                                        name: `${first_name} ${last_name}`,
+                                        value: id
+                                    }));
+                                    inquirer.prompt([
+                                        {
+                                            type: 'list',
+                                            name: 'managerId',
+                                            message: 'Please choose a manager for this new employee.',
+                                            choices: managerPrompts
+                                        }
+                                    ])
+                                        .then(answers => {
+                                            let managerId = answers.managerId;
+                                            // insert new employee
+                                            dao.insertEmployee(firstName, lastName, roleId, managerId)
+                                                // get updated table and show
+                                                .then(([res]) => {
+                                                    let employees = res[0, 0];
+                                                    if (!employees.length) {
+                                                        console.log('\nNo employees were found.\n');
+                                                    } else {
+                                                        // format and output rs to console
+                                                        oh.renderOutput(employees, action);
+                                                    }
+                                                })
+                                                .then(() => mainMenu());
+                                        });
+                                });
+                        });
+                });
+        });
 }
 
-let askEngineerQuestions = () => {
-    // ask engineer questions and add to arrEmployees
-    inquirer.prompt([
-        {
-            type: 'input',
-            name: 'engName',
-            message: 'What is your engineer\'s name?',
-            default: 'Jim Brown',
-        },
-        {
-            type: 'input',
-            name: 'engEmail',
-            message: 'What is your engineer\'s email?',
-            default: 'jim@brown.com',
-        },
-        {
-            type: 'input',
-            name: 'engId',
-            message: 'What is your engineer\'s id?',
-            validate: (input) => {
-                if (!input || isNaN(input)) {
-                    console.log('Answer must be a number.');
-                    return false;
+const addRole = (action) => {
+    dao.fetchDepartments(null)
+        .then(([res]) => {
+            let departments = res[0, 0];
+            // format and output prompt
+            const deptPrompts = departments.map(({ id, name }) => ({
+                name: name,
+                value: id
+            }));
+
+            inquirer.prompt([
+                {
+                    type: 'list',
+                    name: 'deptId',
+                    message: 'Please choose a department for this role.',
+                    choices: deptPrompts
                 }
-                return true;
-            }
-        },
-        {
-            type: 'input',
-            name: 'engGitHub',
-            message: 'What is your engineer\'s GitHub username?',
-        },
-    ])
-    .then((answers) => {
-        // create engineer object and add properties to it
-        let engineer = new Engineer(answers.engName, parseInt(answers.engId), answers.engEmail, answers.engGitHub);
-        arrEmployees.push(engineer);
-        // start at the top
-        askEmployeeQuestions();
-    })
+            ])
+                .then((answers) => {
+                    let deptId = answers.deptId;
+                    inquirer.prompt([
+                        {
+                            type: 'input',
+                            name: 'salary',
+                            message: 'Please enter a salary for this new role.',
+                        }
+                    ])
+                        .then((answers) => {
+                            let salary = answers.salary
+                            inquirer.prompt([
+                                {
+                                    type: 'input',
+                                    name: 'roleName',
+                                    message: 'Please enter a new role name.',
+                                }
+                            ])
+                                // insert the department
+                                .then(answers => dao.insertRole(answers.roleName, salary, deptId))
+                                // get updated table and show
+                                .then(([res]) => {
+                                    let roles = res[0, 0];
+                                    if (!roles.length) {
+                                        console.log('\nNo roles were found.\n');
+                                    } else {
+                                        // format and output rs to console
+                                        oh.renderOutput(roles, action);
+                                    }
+                                })
+                                .then(() => mainMenu());
+                        });
+                });
+        });
 }
 
-// get type of employee and add each to arrEmployees
-let askEmployeeQuestions = () => {
+const addDepartment = (action) => {
     inquirer.prompt([
         {
-            type: 'list',
-            name: 'empType',
-            message: 'Which type of employee would you like to add to the team?',
-            choices: ['Engineer', 'Intern', 'I\'m done',],
+            type: 'input',
+            name: 'deptName',
+            message: 'Please enter a new department.',
         }
     ])
-    .then((answers) => {
-        if (answers.empType == 'Intern') {
-            askInternQuestions();
-        } else if (answers.empType == 'Engineer') {
-            askEngineerQuestions();
-        } else {
-            generateOutput();
-        }
-    });
+        // insert the department
+        .then(answers => dao.insertDept(answers.deptName))
+        // get updated table and show
+        .then(([res]) => {
+            let departments = res[0, 0];
+            if (!departments.length) {
+                console.log('\nNo departments were found.\n');
+            } else {
+                // format and output rs to console
+                oh.renderOutput(departments, action);
+            }
+        })
+        .then(() => mainMenu());
 }
 
-//  a function to write README file
-let writeToFile = (fileName, data) => {
-    fs.writeFile(fileName, data, (err) => {
-        err ? console.log(`Unable to save file. ${err}`) : console.log('The file has been saved!');
-    })
-};
+const updateEmployeeRole = (action) => {
+    // fetch employees
+    dao.fetchEmployees(null, null, null)
+        .then(([res]) => {
+            let employees = res[0, 0];
+            // format and output prompt
+            const employeePrompts = employees.map(({ id, first_name, last_name }) => ({
+                name: `${first_name} ${last_name}`,
+                value: id
+            }));
 
-// generate HTML and write file
-let generateOutput = () => {
+            inquirer.prompt([
+                {
+                    type: 'list',
+                    name: 'employeeId',
+                    message: 'Please choose an employee to update.',
+                    choices: employeePrompts
+                }
+            ])
 
-    // create html file
-    let output = renderOutput(arrEmployees);
+                .then(answers => {
+                    let employeeId = answers.employeeId;
+                    // fetch roles
+                    dao.fetchRoles(null)
+                        .then(([res]) => {
+                            let roles = res[0, 0];
+                            // format and output prompt
+                            const rolePrompts = roles.map(({ id, title, salary }) => ({
+                                name: title,
+                                salary: salary,
+                                value: id
+                            }));
 
-    // write to dist and include css there
-    writeToFile('./dist/index.html', output); 
+                            inquirer.prompt([
+                                {
+                                    type: 'list',
+                                    name: 'roleId',
+                                    message: 'Please choose a new role.',
+                                    choices: rolePrompts
+                                }
+                            ])
+                                .then(answers => {
+                                    let roleId = answers.roleId;
+
+                                    // update the employee
+                                    dao.updateEmployeeRole(employeeId, roleId,)
+                                        // get updated table and show
+                                        .then(([res]) => {
+                                            let employees = res[0, 0];
+                                            if (!employees.length) {
+                                                console.log('\nNo employees were found.\n');
+                                            } else {
+                                                // format and output rs to console
+                                                oh.renderOutput(employees, action);
+                                            }
+                                        })
+                                        .then(() => mainMenu());
+                                })
+                        });
+                });
+        });
 }
 
+const updateEmployeeManager = (action) => {
+    // fetch employees
+    dao.fetchEmployees(null, null, null)
+        .then(([res]) => {
+            let employees = res[0, 0];
+            // format and output prompt
+            const employeePrompts = employees.map(({ id, first_name, last_name }) => ({
+                name: `${first_name} ${last_name}`,
+                value: id
+            }));
 
-// use inquirer to start questions
-mainMenu();
+            inquirer.prompt([
+                {
+                    type: 'list',
+                    name: 'employeeId',
+                    message: 'Please choose an employee to update.',
+                    choices: employeePrompts
+                }
+            ])
+
+                .then(answers => {
+                    let employeeId = answers.employeeId;
+                    // fetch employees
+                    dao.fetchEmployees(null, null, null)
+                        .then(([res]) => {
+                            let managers = res[0, 0];
+                            // format and output prompt
+                            const managerPrompts = managers.map(({ id, first_name, last_name }) => ({
+                                name: `${first_name} ${last_name}`,
+                                value: id
+                            }));
+
+                            inquirer.prompt([
+                                {
+                                    type: 'list',
+                                    name: 'managerId',
+                                    message: 'Please choose an manager for this employee.',
+                                    choices: managerPrompts
+                                }
+                            ]).then(answers => {
+                                let managerId = answers.managerId;
+
+                                // update the employee
+                                dao.updateEmployeeManager(employeeId, managerId)
+                                    // get updated table and show
+                                    .then(([res]) => {
+                                        let employees = res[0, 0];
+                                        if (!employees.length) {
+                                            console.log('\nNo employees were found.\n');
+                                        } else {
+                                            // format and output rs to console
+                                            oh.renderOutput(employees, action);
+                                        }
+                                    })
+                                    .then(() => mainMenu());
+                            })
+                        });
+                });
+        });
+}
+
+const deleteDepartment = (action) => {
+
+    // fetch departments
+    dao.fetchDepartments(null)
+        .then(([res]) => {
+            let departments = res[0, 0];
+            // format and output prompt
+            const deptPrompts = departments.map(({ id, name }) => ({
+                name: name,
+                value: id
+            }));
+
+            inquirer.prompt([
+                {
+                    type: 'list',
+                    name: 'deptId',
+                    message: 'Please choose a department to delete.',
+                    choices: deptPrompts
+                }
+            ])
+
+                // delete the department
+                .then(answers => dao.deleteDept(answers.deptId))
+                // get updated table and show
+                .then(([res]) => {
+                    let departments = res[0, 0];
+                    if (!departments.length) {
+                        console.log('\nNo departments were found.\n');
+                    } else {
+                        // format and output rs to console
+                        oh.renderOutput(departments, action);
+                    }
+                })
+                .then(() => mainMenu());
+        });
+}
+
+const deleteRole = (action) => {
+    // fetch roles
+    dao.fetchRoles(null)
+        .then(([res]) => {
+            let roles = res[0, 0];
+            // format and output prompt
+            const rolePrompts = roles.map(({ id, title, salary }) => ({
+                name: title,
+                salary: salary,
+                value: id
+            }));
+
+            inquirer.prompt([
+                {
+                    type: 'list',
+                    name: 'roleId',
+                    message: 'Please choose a role to delete.',
+                    choices: rolePrompts
+                }
+            ])
+                // delete the role
+                .then(answers => dao.deleteRole(answers.roleId))
+                // get updated table and show
+                .then(([res]) => {
+                    let roles = res[0, 0];
+                    if (!roles.length) {
+                        console.log('\nNo roles were found.\n');
+                    } else {
+                        // format and output rs to console
+                        oh.renderOutput(roles, action);
+                    }
+                })
+                .then(() => mainMenu());
+        });
+}
+
+const deleteEmployee = (action) => {
+    // fetch employees
+    dao.fetchEmployees(null, null, null)
+        .then(([res]) => {
+            let employees = res[0, 0];
+            // format and output prompt
+            const employeePrompts = employees.map(({ id, first_name, last_name }) => ({
+                name: `${first_name} ${last_name}`,
+                value: id
+            }));
+
+            inquirer.prompt([
+                {
+                    type: 'list',
+                    name: 'employeeId',
+                    message: 'Please choose an employee to delete.',
+                    choices: employeePrompts
+                }
+            ])
+
+                // delete the employee
+                .then(answers => dao.deleteEmployee(answers.employeeId))
+                // get updated table and show
+                .then(([res]) => {
+                    let employees = res[0, 0];
+                    if (!employees.length) {
+                        console.log('\nNo employees were found.\n');
+                    } else {
+                        // format and output rs to console
+                        oh.renderOutput(employees, action);
+                    }
+                })
+                .then(() => mainMenu());
+        });
+}
+
+function init() {
+    dao.connect();
+    oh.showSplash();
+    // use inquirer to start questions
+    mainMenu();
+}
+
+init();

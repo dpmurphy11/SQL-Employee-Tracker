@@ -5,6 +5,16 @@ SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;
 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION';
 
 -- -----------------------------------------------------
+-- Schema mydb
+-- -----------------------------------------------------
+-- -----------------------------------------------------
+-- Schema company_db
+-- -----------------------------------------------------
+
+-- -----------------------------------------------------
+-- Schema company_db
+-- -----------------------------------------------------
+CREATE SCHEMA IF NOT EXISTS `company_db` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci ;
 USE `company_db` ;
 
 -- -----------------------------------------------------
@@ -12,13 +22,13 @@ USE `company_db` ;
 -- -----------------------------------------------------
 
 USE `company_db`;
-DROP procedure IF EXISTS `prc_deleteDepartment`;
+DROP procedure IF EXISTS `company_db`.`prc_deleteDepartment`;
 
 DELIMITER $$
 USE `company_db`$$
 CREATE DEFINER=`root`@`localhost` PROCEDURE `prc_deleteDepartment`(department_id int)
 BEGIN
-	delete from department where id = dpartment_id;
+	delete from department where id = department_id;
     call prc_fetchDepartment(NULL);
 END$$
 
@@ -29,7 +39,7 @@ DELIMITER ;
 -- -----------------------------------------------------
 
 USE `company_db`;
-DROP procedure IF EXISTS `prc_deleteEmployee`;
+DROP procedure IF EXISTS `company_db`.`prc_deleteEmployee`;
 
 DELIMITER $$
 USE `company_db`$$
@@ -47,7 +57,7 @@ DELIMITER ;
 -- -----------------------------------------------------
 
 USE `company_db`;
-DROP procedure IF EXISTS `prc_deleteRole`;
+DROP procedure IF EXISTS `company_db`.`prc_deleteRole`;
 
 DELIMITER $$
 USE `company_db`$$
@@ -65,7 +75,7 @@ DELIMITER ;
 -- -----------------------------------------------------
 
 USE `company_db`;
-DROP procedure IF EXISTS `prc_fetchDepartment`;
+DROP procedure IF EXISTS `company_db`.`prc_fetchDepartment`;
 
 DELIMITER $$
 USE `company_db`$$
@@ -87,48 +97,47 @@ DELIMITER ;
 -- -----------------------------------------------------
 
 USE `company_db`;
-DROP procedure IF EXISTS `prc_fetchEmployee`;
+DROP procedure IF EXISTS `company_db`.`prc_fetchEmployee`;
 
 DELIMITER $$
 USE `company_db`$$
 CREATE DEFINER=`root`@`localhost` PROCEDURE `prc_fetchEmployee`(employee_id int, mgr_id int, department_id int)
 BEGIN
 	if department_id is not null then
-   		select employee.id, employee.first_name, employee.last_name, employee.role_id, employee.manager_id, mgr.first_name as mgr_first_name, mgr.last_name as mgr_last_name, 
-        role.department_id, title, name as department, salary
+   		select employee.id, employee.first_name, employee.last_name, employee.manager_id, mgr.first_name as mgr_first_name, mgr.last_name as mgr_last_name, 
+        employee.role_id, title, role.department_id, name as department, salary
 		from employee
 		left outer join role on employee.role_id = role.id
 		left outer join department on department.id = role.department_id 
 		left outer join employee mgr on employee.manager_id = mgr.id
 		where department.id = department_id
-		order by department.id, role_id, first_name, last_name;
+		order by department.id, employee.role_id, first_name, last_name;	
 	elseif mgr_id is not null then
-   		select employee.id, employee.first_name, employee.last_name, employee.role_id, employee.manager_id, mgr.first_name as mgr_first_name, mgr.last_name as mgr_last_name, 
-        role.department_id, title, name as department, salary
+   		select employee.id, employee.first_name, employee.last_name, employee.manager_id, mgr.first_name as mgr_first_name, mgr.last_name as mgr_last_name, 
+        employee.role_id, title, role.department_id, name as department, salary
 		from employee
 		left outer join role on employee.role_id = role.id
 		left outer join department on department.id = role.department_id 
 		left outer join employee mgr on employee.manager_id = mgr.id
         where employee.manager_id = mgr_id
-		order by department.id, role_id, first_name, last_name;
+		order by department.id, employee.role_id, first_name, last_name;	
 	elseif employee_id is not NULL then
-   		select employee.id, employee.first_name, employee.last_name, employee.role_id, employee.manager_id, mgr.first_name as mgr_first_name, mgr.last_name as mgr_last_name, 
-        role.department_id, title, name as department, salary
+   		select employee.id, employee.first_name, employee.last_name, employee.manager_id, mgr.first_name as mgr_first_name, mgr.last_name as mgr_last_name, 
+        employee.role_id, title, role.department_id, name as department, salary
 		from employee
 		left outer join role on employee.role_id = role.id
 		left outer join department on department.id = role.department_id 
 		left outer join employee mgr on employee.manager_id = mgr.id
 		where employee.id = employee_id
-		order by department.id, role_id, first_name, last_name;
+		order by department.id, employee.role_id, first_name, last_name;	
 	else
-   		select employee.id, employee.first_name, employee.last_name, employee.role_id, employee.manager_id, mgr.first_name as mgr_first_name, mgr.last_name as mgr_last_name, 
-        role.department_id, title, name as department, salary
+   		select employee.id, employee.first_name, employee.last_name, employee.manager_id, mgr.first_name as mgr_first_name, mgr.last_name as mgr_last_name, 
+        employee.role_id, title, role.department_id, name as department, salary
 		from employee
 		left outer join role on employee.role_id = role.id
 		left outer join department on department.id = role.department_id 
 		left outer join employee mgr on employee.manager_id = mgr.id
-		order by department.id, role_id, first_name, last_name;
-	end if;
+		order by department.id, employee.role_id, first_name, last_name;	end if;
 END$$
 
 DELIMITER ;
@@ -138,19 +147,23 @@ DELIMITER ;
 -- -----------------------------------------------------
 
 USE `company_db`;
-DROP procedure IF EXISTS `prc_fetchRole`;
+DROP procedure IF EXISTS `company_db`.`prc_fetchRole`;
 
 DELIMITER $$
 USE `company_db`$$
 CREATE DEFINER=`root`@`localhost` PROCEDURE `prc_fetchRole`(roleId int)
 BEGIN
 	if roleId  is not null then
-   		select id, title, salary, department_id 
+   		select role.id, title, salary, department_id, name 
         from role
-        where id = roleId;
+        left outer join department on department.id = role.department_id
+        where role.id = roleId
+        order by role.department_id;
 	else 
-   		select id, title, salary, department_id 
-        from role;
+   		select role.id, title, salary, department_id, name 
+        from role
+        left outer join department on department.id = role.department_id
+        order by role.department_id;
 	end if;
 END$$
 
@@ -161,13 +174,13 @@ DELIMITER ;
 -- -----------------------------------------------------
 
 USE `company_db`;
-DROP procedure IF EXISTS `prc_getTotalSalaryByDept`;
+DROP procedure IF EXISTS `company_db`.`prc_getTotalSalaryByDept`;
 
 DELIMITER $$
 USE `company_db`$$
 CREATE DEFINER=`root`@`localhost` PROCEDURE `prc_getTotalSalaryByDept`(dept_id int)
 BEGIN
-	select role.id as role_id, department.id as department_id, sum(salary), department.name as department
+	select department_id, sum(salary) as total, name
     from role
     inner join department on role.department_id = department.id
     inner join employee on role.id = employee.role_id
@@ -182,7 +195,7 @@ DELIMITER ;
 -- -----------------------------------------------------
 
 USE `company_db`;
-DROP procedure IF EXISTS `prc_insertDepartment`;
+DROP procedure IF EXISTS `company_db`.`prc_insertDepartment`;
 
 DELIMITER $$
 USE `company_db`$$
@@ -201,7 +214,7 @@ DELIMITER ;
 -- -----------------------------------------------------
 
 USE `company_db`;
-DROP procedure IF EXISTS `prc_insertEmployee`;
+DROP procedure IF EXISTS `company_db`.`prc_insertEmployee`;
 
 DELIMITER $$
 USE `company_db`$$
@@ -210,7 +223,7 @@ BEGIN
 	insert into employee (first_name, last_name, role_id, manager_id) 
 	values (firstName, lastName, roleId, managerId);
     -- return all after insert
-    call pre_fetchEmployee(NULL, NULL, NULL);
+    call prc_fetchEmployee(NULL, NULL, NULL);
 END$$
 
 DELIMITER ;
@@ -220,11 +233,11 @@ DELIMITER ;
 -- -----------------------------------------------------
 
 USE `company_db`;
-DROP procedure IF EXISTS `prc_insertRole`;
+DROP procedure IF EXISTS `company_db`.`prc_insertRole`;
 
 DELIMITER $$
 USE `company_db`$$
-CREATE DEFINER=`root`@`localhost` PROCEDURE `prc_insertRole`(emp_title varchar(30), emp_salary varchar(30), dpt_id int)
+CREATE DEFINER=`root`@`localhost` PROCEDURE `prc_insertRole`(emp_title varchar(30), emp_salary decimal, dpt_id int)
 BEGIN
 	insert into role (title, salary, department_id) 
 	values (emp_title, emp_salary, dpt_id);
@@ -239,7 +252,7 @@ DELIMITER ;
 -- -----------------------------------------------------
 
 USE `company_db`;
-DROP procedure IF EXISTS `prc_updateEmployee`;
+DROP procedure IF EXISTS `company_db`.`prc_updateEmployee`;
 
 DELIMITER $$
 USE `company_db`$$
@@ -253,6 +266,38 @@ BEGIN
     
     -- return this emploee wafetr update
     call prc_fetchEmployee(employeeId, NULL, NULL);
+END$$
+
+DELIMITER ;
+
+USE `company_db`;
+DROP procedure IF EXISTS `prc_updateEmployeeRole`;
+
+DELIMITER $$
+USE `company_db`$$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `prc_updateEmployeeRole`(employeeId int, roleId int)
+BEGIN
+	update employee
+    set role_id = roleId
+    where id = employeeId;
+    
+    call prc_fetchEmployee(null, null, null);
+END$$
+
+DELIMITER ;
+
+USE `company_db`;
+DROP procedure IF EXISTS `prc_updateEmployeeManager`;
+
+DELIMITER $$
+USE `company_db`$$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `prc_updateEmployeeManager`(employeeId int, managerId int)
+BEGIN
+	update employee
+    set manager_id = managerId
+    where id = employeeId;
+    
+    call prc_fetchEmployee(null, null, null);
 END$$
 
 DELIMITER ;

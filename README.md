@@ -72,7 +72,7 @@ THEN the user is presented with a formatted table showing the combined salaries 
 ### License
 [![GitHub license](https://img.shields.io/github/license/dpmurphy11/Team-Profile-Generator?style=plastic)](https://github.com/dpmurphy11/SQL-Employee-Tracker/blob/main/LICENSE)
 ### Screenshot
-![Application screenshot]()
+![Application screenshot](./assets/SQL-Employee-Tracker.png)
 ### Repository: <https://github.com/dpmurphy11/SQL-Employee-Tracker>
 ### Demo Video 1: <https://dpmurphy11.github.io/SQL-Employee-Tracker/assets/SQL-Employee-Tracker-video1.webm>
 ### Demo Video 2: <https://dpmurphy11.github.io/SQL-Employee-Tracker/assets/SQL-Emploee-Tracker-video2.webm>
